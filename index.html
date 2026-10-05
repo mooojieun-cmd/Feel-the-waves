@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title></title>
+
+  <style>
+    @font-face {
+      font-family: "JetBrains Mono";
+      src: url("./fonts/JetBrainsMono-Regular.woff2") format("woff2");
+      font-weight: 400;
+    }
+
+    @font-face {
+      font-family: "JetBrains Mono";
+      src: url("./fonts/JetBrainsMono-Bold.woff2") format("woff2");
+      font-weight: 700;
+    }
+
+    body {
+      margin: 0;
+      background-color: #ffffff;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .image-stage {
+      width: 700px;
+      height: 466.66px;
+
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      overflow: hidden;
+    }
+
+    .image-stage img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .image-cover {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+
+      background-color: #000;
+      cursor: pointer;
+      transition: opacity 0.5s ease;
+    }
+
+    .image-stage.revealed .image-cover {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    canvas {
+      pointer-events: none;
+    }
+    .page-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+  background: rgba(17, 21, 253, 0.9);
+
+  transform: translateX(100%);
+  transition: transform 1.2s cubic-bezier(0.77, 0, 0.18, 1);
+
+  pointer-events: none;
+}
+
+body.is-leaving .page-wipe {
+  transform: translateX(0);
+}
+  </style>
+</head>
+
+<body>
+
+  <div class="image-stage">
+  	 <a href="./aski.html" class="image-link">
+    	<img src="./wave.jpg" alt="wave">
+     </a>
+    <div class="image-cover"></div>
+  </div>
+  <audio id="waveSound" src="wavesound.mp3" preload="auto" loop ></audio>
+ <div class="page-wipe"></div>
+
+<audio
+  id="transitionBgm"
+  src="./wavesound.mp3"
+  preload="auto">
+</audio>
+<div>
+  		<footer style="color:#FF6800; position: fixed; font-size: 0.8rem;
+	bottom: 0px;">Copyright © 2026 WooJiEun All Rights Reserved.</footer>
+  </div>
+
+  <script type="module">
+    function slowTextFlag({
+    text,
+    color = "#FF6800",
+    waveSpeed = 0.05,
+    textSize = 12,
+    gap = textSize + 2,
+    font = "monospace"
+  }) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.style.position = "fixed";
+    canvas.style.top = "0";
+    canvas.style.left = "0";
+    canvas.style.pointerEvents = "none";
+    canvas.style.zIndex = "999999";
+
+    document.body.appendChild(canvas);
+
+    let width;
+    let height;
+    let angle = 0;
+    let animationFrame;
+
+    const cursor = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+
+    const characters = Array.from(" " + text).map(letter => ({
+      letter,
+      x: cursor.x,
+      y: cursor.y
+    }));
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+
+    function moveCursor(event) {
+      cursor.x = event.clientX;
+      cursor.y = event.clientY;
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+
+      angle += waveSpeed;
+
+      const waveX = 2 * Math.cos(angle);
+      const waveY = 6 * Math.sin(angle);
+
+      ctx.fillStyle = color;
+      ctx.font = `${textSize}px ${font}`;
+
+      for (let i = characters.length - 1; i > 0; i--) {
+        characters[i].x = characters[i - 1].x + gap;
+        characters[i].y = characters[i - 1].y;
+
+        ctx.fillText(
+          characters[i].letter,
+          characters[i].x,
+          characters[i].y
+        );
+      }
+
+      characters[0].x +=
+        (cursor.x - characters[0].x) / 5 + waveX + 2;
+
+      characters[0].y +=
+        (cursor.y - characters[0].y) / 5 + waveY;
+
+      animationFrame = requestAnimationFrame(animate);
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+    window.addEventListener("mousemove", moveCursor);
+
+    animate();
+  }
+
+  slowTextFlag({
+    text: "Feel the waves within your heart...",
+    color: "#FF6800",
+    waveSpeed: 0.05
+  });
+
+  function revealImageAndPlay() {
+    const imageStage = document.querySelector(".image-stage");
+    const waveSound = document.querySelector("#waveSound");
+
+    imageStage.classList.add("revealed");
+
+    waveSound.currentTime = 0;
+
+    waveSound.play().catch((error) => {
+      console.error("오디오 재생 실패:", error);
+    });
+  }
+    const imageCover = document.querySelector(".image-cover");
+
+imageCover.addEventListener("click", revealImageAndPlay);
+const imageLink = document.querySelector(".image-link");
+const transitionBgm = document.querySelector("#transitionBgm");
+
+imageLink.addEventListener("click", (event) => {
+  event.preventDefault();
+
+  const nextPage = imageLink.href;
+
+  transitionBgm.currentTime = 0;
+
+  transitionBgm.play().catch((error) => {
+    console.error("트랜지션 음악 재생 실패:", error);
+  });
+
+  document.body.classList.add("is-leaving");
+
+  setTimeout(() => {
+    window.location.href = nextPage;
+  }, 1200);
+});
+
+
+  </script>
+
+</body>
+</html>
